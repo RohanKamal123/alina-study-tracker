@@ -1,81 +1,146 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ink: #0f172a;
-  --color-brand-50: #eef2ff;
-  --color-brand-100: #e0e7ff;
-  --color-brand-200: #c7d2fe;
-  --color-brand-300: #a5b4fc;
-  --color-brand-400: #818cf8;
-  --color-brand-500: #6366f1;
-  --color-brand-600: #4f46e5;
-  --color-brand-700: #4338ca;
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, "Segoe UI",
     "Noto Sans Bengali", "Hind Siliguri", sans-serif;
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
 }
 
+/*
+  Palette: a ginger cat asleep on a sunlit windowsill.
+  Warm cream paper, marmalade orange, espresso ink - deliberately no cold
+  greys anywhere, since a single slate token is what makes a warm palette
+  read as generic.
+*/
 :root {
-  --bg: #f6f7fb;
-  --surface: #ffffff;
-  --surface-2: #f1f5f9;
-  --border: #e2e8f0;
-  --text: #0f172a;
-  --muted: #64748b;
-  --accent: #4f46e5;
-  --accent-soft: #eef2ff;
-  --good: #16a34a;
-  --warn: #d97706;
-  --bad: #dc2626;
+  --bg: #fdf7ef;
+  --bg-glow: #fbe7cd;
+  --surface: #fffdfa;
+  --surface-2: #f8ecdb;
+  --surface-3: #f2dfc6;
+  --border: #eddcc3;
+  --text: #3a2a1d;
+  --text-soft: #6a5341;
+  --muted: #8b7059;
+  --accent: #e8620e;
+  --accent-strong: #c74e08;
+  --accent-soft: #fdeedc;
+  --ink-on-accent: #fffaf4;
+  --good: #5f8c1f;
+  --good-soft: #eef4de;
+  --warn: #c2870b;
+  --warn-soft: #fbf0d6;
+  --bad: #b3261e;
+  --bad-soft: #fbe6e2;
+  --shadow-sm: 0 1px 2px rgba(88, 52, 22, 0.06), 0 2px 6px rgba(88, 52, 22, 0.05);
+  --shadow-md: 0 2px 4px rgba(88, 52, 22, 0.06), 0 8px 20px rgba(88, 52, 22, 0.08);
+  --shadow-lg: 0 8px 16px rgba(88, 52, 22, 0.08), 0 24px 48px rgba(88, 52, 22, 0.12);
+  --ring: rgba(232, 98, 14, 0.28);
 }
 
 :root:not([data-theme="light"]) {
   @media (prefers-color-scheme: dark) {
-    --bg: #0b1020;
-    --surface: #131a2e;
-    --surface-2: #1b2440;
-    --border: #27314f;
-    --text: #e9edf6;
-    --muted: #94a3b8;
-    --accent: #818cf8;
-    --accent-soft: #1e254a;
-    --good: #4ade80;
-    --warn: #fbbf24;
-    --bad: #f87171;
+    --bg: #191110;
+    --bg-glow: #2c1a12;
+    --surface: #241a16;
+    --surface-2: #30231c;
+    --surface-3: #3c2c23;
+    --border: #413126;
+    --text: #f6eadc;
+    --text-soft: #d8c3ac;
+    --muted: #ab9480;
+    --accent: #ff8c42;
+    --accent-strong: #ffa463;
+    --accent-soft: #38241a;
+    --ink-on-accent: #2a1509;
+    --good: #9ccc4a;
+    --good-soft: #242c14;
+    --warn: #e8b33c;
+    --warn-soft: #33270f;
+    --bad: #f0736a;
+    --bad-soft: #35191a;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.4), 0 24px 48px rgba(0, 0, 0, 0.5);
+    --ring: rgba(255, 140, 66, 0.32);
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #0b1020;
-  --surface: #131a2e;
-  --surface-2: #1b2440;
-  --border: #27314f;
-  --text: #e9edf6;
-  --muted: #94a3b8;
-  --accent: #818cf8;
-  --accent-soft: #1e254a;
-  --good: #4ade80;
-  --warn: #fbbf24;
-  --bad: #f87171;
+  --bg: #191110;
+  --bg-glow: #2c1a12;
+  --surface: #241a16;
+  --surface-2: #30231c;
+  --surface-3: #3c2c23;
+  --border: #413126;
+  --text: #f6eadc;
+  --text-soft: #d8c3ac;
+  --muted: #ab9480;
+  --accent: #ff8c42;
+  --accent-strong: #ffa463;
+  --accent-soft: #38241a;
+  --ink-on-accent: #2a1509;
+  --good: #9ccc4a;
+  --good-soft: #242c14;
+  --warn: #e8b33c;
+  --warn-soft: #33270f;
+  --bad: #f0736a;
+  --bad-soft: #35191a;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.4), 0 24px 48px rgba(0, 0, 0, 0.5);
+  --ring: rgba(255, 140, 66, 0.32);
 }
 
-html,
+html {
+  background: var(--bg);
+}
+
 body {
   background: var(--bg);
   color: var(--text);
-}
-
-body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  /* Room for the mobile bottom nav. */
+  text-rendering: optimizeLegibility;
   padding-bottom: env(safe-area-inset-bottom);
+  /* A low sun coming in from the top-left. Fixed so it never scrolls away. */
+  background-image: radial-gradient(
+    900px 520px at 12% -8%,
+    var(--bg-glow) 0%,
+    transparent 70%
+  );
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+h1,
+h2,
+h3,
+.display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--ink-on-accent);
 }
 
 @layer components {
+  /*
+    Cards carry a soft warm shadow rather than a hairline border. The 1px grey
+    outline on every box is the single biggest tell of a default template.
+  */
   .card {
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 1rem;
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  }
+
+  .card-raised {
+    box-shadow: var(--shadow-md);
   }
 
   .muted {
@@ -86,25 +151,32 @@ body {
     width: 100%;
     background: var(--surface);
     color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 0.625rem;
-    padding: 0.5rem 0.7rem;
+    border: 1.5px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 0.55rem 0.8rem;
     font-size: 0.9rem;
+    font-family: inherit;
     outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
 
   .input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+    box-shadow: 0 0 0 3.5px var(--ring);
+  }
+
+  .input::placeholder {
+    color: color-mix(in srgb, var(--muted) 75%, transparent);
   }
 
   .label {
     display: block;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.7rem;
+    font-weight: 700;
     color: var(--muted);
-    margin-bottom: 0.25rem;
-    letter-spacing: 0.01em;
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
   }
 
   .btn {
@@ -112,48 +184,54 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    border-radius: 0.625rem;
-    padding: 0.5rem 0.85rem;
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
     font-size: 0.875rem;
-    font-weight: 600;
-    border: 1px solid transparent;
+    font-weight: 700;
+    font-family: inherit;
+    border: 1.5px solid transparent;
     cursor: pointer;
-    transition: filter 0.15s ease, background 0.15s ease;
+    transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s ease;
     white-space: nowrap;
   }
 
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
   .btn:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
   }
 
   .btn-primary {
     background: var(--accent);
-    color: #fff;
+    color: var(--ink-on-accent);
+    box-shadow: 0 2px 0 var(--accent-strong), var(--shadow-sm);
   }
 
   .btn-primary:hover:not(:disabled) {
-    filter: brightness(1.08);
+    background: var(--accent-strong);
   }
 
   .btn-ghost {
     background: var(--surface-2);
     color: var(--text);
-    border-color: var(--border);
+    border-color: color-mix(in srgb, var(--border) 80%, transparent);
   }
 
   .btn-ghost:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+    background: var(--surface-3);
   }
 
   .btn-danger {
     background: transparent;
     color: var(--bad);
-    border-color: color-mix(in srgb, var(--bad) 35%, transparent);
+    border-color: color-mix(in srgb, var(--bad) 40%, transparent);
   }
 
   .btn-danger:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--bad) 12%, transparent);
+    background: var(--bad-soft);
   }
 
   .chip {
@@ -161,18 +239,43 @@ body {
     align-items: center;
     gap: 0.3rem;
     border-radius: 999px;
-    padding: 0.15rem 0.55rem;
+    padding: 0.2rem 0.6rem;
     font-size: 0.7rem;
-    font-weight: 600;
-    border: 1px solid var(--border);
+    font-weight: 700;
+    border: 1.5px solid color-mix(in srgb, var(--border) 85%, transparent);
     background: var(--surface-2);
-    color: var(--muted);
+    color: var(--text-soft);
     white-space: nowrap;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  /* Big numerals want the display face and tabular figures. */
+  .numeral {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .eyebrow {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Dashed "nothing here yet" containers, warmed up. */
+  .dashed {
+    border: 2px dashed color-mix(in srgb, var(--border) 90%, transparent);
+    border-radius: 1.25rem;
+    background: color-mix(in srgb, var(--surface-2) 45%, transparent);
   }
 }
 
-/* Keep wide tables and the timetable scrollable inside their own box rather
-   than making the whole page scroll sideways on a phone. */
 .scroll-x {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -181,4 +284,18 @@ body {
 input[type="date"],
 input[type="time"] {
   color-scheme: light dark;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

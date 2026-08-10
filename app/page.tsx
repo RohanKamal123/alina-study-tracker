@@ -15,6 +15,7 @@ import {
 import { useStore } from "@/lib/store";
 import { Card, Dot, Progress, Stat } from "@/components/ui";
 import { Donut } from "@/components/charts";
+import { SleepingCat } from "@/components/Cat";
 import {
   classesOn,
   daysToExam,
@@ -84,45 +85,74 @@ export default function DashboardPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-          Assalamu alaikum, {state.settings.studentName || "there"} 👋
+        <h1 className="text-2xl font-bold sm:text-[32px]">
+          Assalamu alaikum, {state.settings.studentName || "there"}
         </h1>
-        <p className="muted mt-1 text-sm">{formatLongDay(today)}</p>
+        <p className="mt-1 text-sm font-medium" style={{ color: "var(--muted)" }}>
+          {formatLongDay(today)}
+        </p>
       </div>
 
-      {/* Countdown banner */}
+      {/* Countdown hero */}
       <div
-        className="card flex flex-wrap items-center justify-between gap-4 p-5"
-        style={{ background: "var(--accent-soft)", borderColor: "transparent" }}
+        className="card card-raised relative overflow-hidden !border-transparent p-6 sm:p-7"
+        style={{
+          background: "linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%)",
+          color: "var(--ink-on-accent)",
+        }}
       >
-        <div>
-          <div
-            className="text-xs font-bold uppercase tracking-wider"
-            style={{ color: "var(--accent)" }}
-          >
-            SSC Examination
-          </div>
-          <div className="mt-1 text-3xl font-extrabold sm:text-4xl">
+        {/* Desktop: sits in the open middle of the card, clear of both the
+            numerals on the left and the donut on the right. */}
+        <SleepingCat
+          size={162}
+          className="pointer-events-none absolute bottom-2 right-44 hidden sm:block"
+          style={{ color: "var(--ink-on-accent)", opacity: 0.28 }}
+        />
+        {/* Mobile: the donut wraps onto its own row, leaving real space beside
+            it — the cat is properly visible there rather than a watermark. */}
+        <SleepingCat
+          size={148}
+          className="pointer-events-none absolute bottom-3 right-2 sm:hidden"
+          style={{ color: "var(--ink-on-accent)", opacity: 0.32 }}
+        />
+
+        <div className="relative flex flex-wrap items-center justify-between gap-5">
+          <div className="min-w-0">
+            <div className="eyebrow" style={{ color: "inherit", opacity: 0.75 }}>
+              SSC Examination
+            </div>
             {left > 0 ? (
               <>
-                {left} <span className="text-lg font-bold">days left</span>
+                <div className="mt-1.5 flex items-baseline gap-2">
+                  <span className="numeral text-6xl sm:text-7xl">{left}</span>
+                  <span className="display text-xl font-bold sm:text-2xl">days left</span>
+                </div>
+                <div className="mt-2 text-sm font-semibold" style={{ opacity: 0.85 }}>
+                  About {Math.floor(left / 7)} weeks · syllabus {progress.percent}% done
+                </div>
               </>
-            ) : left === 0 ? (
-              "It's exam day — you've got this."
             ) : (
-              "Exams are behind you."
+              <div className="display mt-2 text-3xl font-bold">
+                {left === 0 ? "It's exam day — you've got this." : "Exams are behind you."}
+              </div>
             )}
           </div>
-          {left > 0 ? (
-            <div className="muted mt-1 text-sm">
-              That is about {Math.floor(left / 7)} weeks. Syllabus is {progress.percent}% done.
-            </div>
-          ) : null}
+
+          <div className="relative shrink-0">
+            <Donut
+              percent={progress.percent}
+              size={116}
+              stroke={12}
+              color="var(--ink-on-accent)"
+              track="color-mix(in srgb, var(--ink-on-accent) 22%, transparent)"
+            >
+              <span className="numeral text-2xl">{progress.percent}%</span>
+              <span className="text-[10px] font-bold" style={{ opacity: 0.8 }}>
+                syllabus
+              </span>
+            </Donut>
+          </div>
         </div>
-        <Donut percent={progress.percent} size={104} stroke={11}>
-          <span className="text-xl font-bold">{progress.percent}%</span>
-          <span className="muted text-[10px]">syllabus</span>
-        </Donut>
       </div>
 
       {overdue.length > 0 ? (
@@ -140,7 +170,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
-          label="Studied today"
+          label="Studied"
           value={formatDuration(minutesToday)}
           sub={`Goal ${formatDuration(target)}`}
           tone={minutesToday >= target ? "good" : minutesToday > 0 ? "warn" : "default"}
@@ -154,7 +184,7 @@ export default function DashboardPage() {
           icon={<Flame size={13} />}
         />
         <Stat
-          label="Classes today"
+          label="Classes"
           value={classes.length}
           sub={
             classes.length > 0
@@ -164,7 +194,7 @@ export default function DashboardPage() {
           icon={<CalendarDays size={13} />}
         />
         <Stat
-          label="Routine done"
+          label="Routine"
           value={`${routineStats.done}/${routineStats.total}`}
           sub="Daily habits"
           tone={
@@ -272,9 +302,11 @@ export default function DashboardPage() {
                       ) : (
                         <Circle size={17} className="muted" />
                       )}
-                      <span className={done ? "muted line-through" : ""}>{r.title}</span>
+                      <span className={`min-w-0 flex-1 ${done ? "muted line-through" : ""}`}>
+                        {r.title}
+                      </span>
                       {r.time ? (
-                        <span className="muted ml-auto flex items-center gap-1 text-xs">
+                        <span className="muted flex shrink-0 items-center gap-1 whitespace-nowrap text-xs">
                           <Clock size={11} />
                           {formatTime(r.time)}
                         </span>

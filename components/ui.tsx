@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { X } from "lucide-react";
+import { Paw } from "@/components/Cat";
 
 export function Card({
   children,
@@ -9,7 +10,7 @@ export function Card({
   ...rest
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`card p-4 ${className}`} {...rest}>
+    <div className={`card p-4 sm:p-5 ${className}`} {...rest}>
       {children}
     </div>
   );
@@ -25,10 +26,14 @@ export function PageHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{title}</h1>
-        {subtitle ? <p className="muted mt-1 text-sm">{subtitle}</p> : null}
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+      <div className="max-w-2xl">
+        <h1 className="text-2xl font-bold sm:text-[30px]">{title}</h1>
+        {subtitle ? (
+          <p className="mt-1.5 text-sm leading-relaxed" style={{ color: "var(--text-soft)" }}>
+            {subtitle}
+          </p>
+        ) : null}
       </div>
       {action}
     </div>
@@ -45,12 +50,14 @@ export function Empty({
   action?: React.ReactNode;
 }) {
   return (
-    <div
-      className="rounded-2xl border border-dashed p-8 text-center"
-      style={{ borderColor: "var(--border)" }}
-    >
-      <p className="font-semibold">{title}</p>
-      {hint ? <p className="muted mx-auto mt-1 max-w-sm text-sm">{hint}</p> : null}
+    <div className="dashed px-6 py-10 text-center">
+      <Paw size={34} className="mx-auto mb-3" style={{ color: "var(--accent)", opacity: 0.35 }} />
+      <p className="display text-base font-bold">{title}</p>
+      {hint ? (
+        <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
+          {hint}
+        </p>
+      ) : null}
       {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
     </div>
   );
@@ -89,28 +96,32 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
-      style={{ background: "rgba(2,6,23,0.55)" }}
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
+      style={{ background: "color-mix(in srgb, #2a1a0e 62%, transparent)" }}
       onMouseDown={(e) => {
         if (!panel.current?.contains(e.target as Node)) onClose();
       }}
     >
       <div
         ref={panel}
-        className={`card max-h-[92vh] w-full overflow-y-auto rounded-b-none sm:rounded-2xl ${
+        className={`card card-raised max-h-[92vh] w-full overflow-y-auto !rounded-b-none sm:!rounded-3xl ${
           wide ? "sm:max-w-3xl" : "sm:max-w-lg"
         }`}
+        style={{ boxShadow: "var(--shadow-lg)" }}
       >
         <div
-          className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b px-4 py-3"
-          style={{ background: "var(--surface)", borderColor: "var(--border)" }}
+          className="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 py-3.5"
+          style={{
+            background: "var(--surface)",
+            borderBottom: "1.5px solid color-mix(in srgb, var(--border) 70%, transparent)",
+          }}
         >
-          <h2 className="text-base font-bold">{title}</h2>
-          <button className="btn btn-ghost !px-2 !py-1" onClick={onClose} aria-label="Close">
+          <h2 className="text-lg font-bold">{title}</h2>
+          <button className="btn btn-ghost !px-2 !py-1.5" onClick={onClose} aria-label="Close">
             <X size={16} />
           </button>
         </div>
-        <div className="p-4">{children}</div>
+        <div className="p-5">{children}</div>
       </div>
     </div>
   );
@@ -129,7 +140,11 @@ export function Field({
     <label className="block">
       <span className="label">{label}</span>
       {children}
-      {hint ? <span className="muted mt-1 block text-xs">{hint}</span> : null}
+      {hint ? (
+        <span className="mt-1 block text-xs" style={{ color: "var(--muted)" }}>
+          {hint}
+        </span>
+      ) : null}
     </label>
   );
 }
@@ -137,7 +152,7 @@ export function Field({
 export function Progress({
   value,
   color,
-  height = 8,
+  height = 9,
 }: {
   value: number;
   color?: string;
@@ -147,14 +162,14 @@ export function Progress({
   return (
     <div
       className="w-full overflow-hidden rounded-full"
-      style={{ background: "var(--surface-2)", height }}
+      style={{ background: "var(--surface-3)", height }}
       role="progressbar"
       aria-valuenow={pct}
       aria-valuemin={0}
       aria-valuemax={100}
     >
       <div
-        className="h-full rounded-full transition-all duration-500"
+        className="h-full rounded-full transition-all duration-700"
         style={{ width: `${pct}%`, background: color ?? "var(--accent)" }}
       />
     </div>
@@ -182,16 +197,34 @@ export function Stat({
         : tone === "bad"
           ? "var(--bad)"
           : "var(--text)";
+  const toneBg =
+    tone === "good"
+      ? "var(--good-soft)"
+      : tone === "warn"
+        ? "var(--warn-soft)"
+        : tone === "bad"
+          ? "var(--bad-soft)"
+          : "var(--surface-2)";
+
   return (
-    <div className="card p-4">
-      <div className="muted flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
-        {icon}
-        {label}
+    <div className="card p-3.5 sm:p-4">
+      <div className="flex items-center gap-2">
+        <span
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+          style={{ background: toneBg, color: toneColor }}
+        >
+          {icon}
+        </span>
+        <span className="eyebrow truncate">{label}</span>
       </div>
-      <div className="mt-1.5 text-2xl font-bold" style={{ color: toneColor }}>
+      <div className="numeral mt-2.5 text-[26px] sm:text-3xl" style={{ color: toneColor }}>
         {value}
       </div>
-      {sub ? <div className="muted mt-0.5 text-xs">{sub}</div> : null}
+      {sub ? (
+        <div className="mt-1 text-xs font-medium" style={{ color: "var(--muted)" }}>
+          {sub}
+        </div>
+      ) : null}
     </div>
   );
 }

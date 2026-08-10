@@ -49,7 +49,7 @@ export function BarChart({
               className="relative w-full rounded-t-md transition-all"
               style={{
                 height: `${Math.max(d.value === 0 ? 0 : 3, (d.value / max) * 100)}%`,
-                background: d.value === 0 ? "var(--surface-2)" : color,
+                background: d.value === 0 ? "var(--surface-3)" : color,
                 minHeight: d.value === 0 ? 2 : undefined,
               }}
               title={`${d.label}: ${d.value}${suffix}`}
@@ -158,12 +158,15 @@ export function Donut({
   size = 120,
   stroke = 12,
   color = "var(--accent)",
+  track = "var(--surface-3)",
   children,
 }: {
   percent: number;
   size?: number;
   stroke?: number;
   color?: string;
+  /** Colour of the unfilled ring — override when sitting on a tinted surface. */
+  track?: string;
   children?: React.ReactNode;
 }) {
   const pct = Math.max(0, Math.min(100, percent));
@@ -173,7 +176,7 @@ export function Donut({
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface-2)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track} strokeWidth={stroke} />
         <circle
           cx={size / 2}
           cy={size / 2}
