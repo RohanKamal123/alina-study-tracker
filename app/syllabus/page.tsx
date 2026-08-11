@@ -7,7 +7,25 @@ import { Card, ConfirmButton, Dot, Empty, Field, Modal, PageHeader } from "@/com
 import { ChapterLevelChart, LevelSpread } from "@/components/charts";
 import { progressBySubject } from "@/lib/selectors";
 import { LEVELS, MAX_LEVEL, levelMeta } from "@/lib/levels";
-import type { Chapter } from "@/lib/types";
+import type { AppState, Chapter } from "@/lib/types";
+
+/**
+ * Applies a level change and appends it to the history, so progress over time
+ * is reconstructable. Every path that edits a level goes through here.
+ */
+function recordLevel(draft: AppState, chapter: Chapter, level: number) {
+  const previous = chapter.level ?? 0;
+  chapter.level = level;
+  chapter.updatedAt = new Date().toISOString();
+  draft.levelHistory.push({
+    id: uid("lv"),
+    chapterId: chapter.id,
+    subjectId: chapter.subjectId,
+    level,
+    previous,
+    at: chapter.updatedAt,
+  });
+}
 
 /** The 0-5 picker. Deliberately six real buttons, not a slider — the labels
  *  are the whole point and a slider hides them. */
@@ -57,7 +75,7 @@ function LevelPicker({
 }
 
 export default function SyllabusPage() {
-  const { state, update, upsert, remove } = useStore();
+  const { state, update, remove } = useStore();
   const [open, setOpen] = useState<string | null>(null);
   const [chapterDraft, setChapterDraft] = useState<Chapter | null>(null);
 
@@ -66,10 +84,8 @@ export default function SyllabusPage() {
   const setLevel = (id: string, level: number) => {
     update((draft) => {
       const c = draft.chapters.find((x) => x.id === id);
-      if (c) {
-        c.level = level;
-        c.updatedAt = new Date().toISOString();
-      }
+      if (!c || c.level === level) return;
+      recordLevel(draft, c, level);
     });
   };
 
@@ -318,7 +334,27 @@ export default function SyllabusPage() {
                   className="btn btn-primary"
                   disabled={!chapterDraft.name.trim()}
                   onClick={() => {
-                    upsert("chapters", { ...chapterDraft, name: chapterDraft.name.trim() });
+                    const next = { ...chapterDraft, name: chapterDraft.name.trim() };
+                    update((draft) => {
+                      const existing = draft.chapters.find((c) => c.id === next.id);
+                      if (!existing) {
+                        draft.chapters.push(next);
+                        if (next.level > 0) {
+                          draft.levelHistory.push({
+                            id: uid("lv"),
+                            chapterId: next.id,
+                            subjectId: next.subjectId,
+                            level: next.level,
+                            previous: 0,
+                            at: new Date().toISOString(),
+                          });
+                        }
+                        return;
+                      }
+                      const levelChanged = existing.level !== next.level;
+                      Object.assign(existing, next);
+                      if (levelChanged) recordLevel(draft, existing, next.level);
+                    });
                     setChapterDraft(null);
                   }}
                 >

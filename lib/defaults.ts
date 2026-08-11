@@ -57,6 +57,7 @@ export function emptyState(): AppState {
     homework: [],
     exams: [],
     coverage: [],
+    levelHistory: [],
     studySessions: [],
     fees: [],
     routines: [
@@ -101,6 +102,7 @@ export function migrate(raw: unknown): AppState {
     // v1 stored marks here; those rows are dropped by normaliseExams below.
     exams: arr(input.exams, []),
     coverage: arr(input.coverage, []),
+    levelHistory: arr(input.levelHistory, []),
     studySessions: arr(input.studySessions, []),
     fees: arr(input.fees, []),
     routines: arr(input.routines, []),

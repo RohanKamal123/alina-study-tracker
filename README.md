@@ -24,6 +24,7 @@ and switched on with two environment variables.
 | **Study timer** | Stopwatch that logs self-study minutes per subject, plus a daily streak and 14-day chart |
 | **Routine & goals** | Repeating daily habits with a 7-day consistency bar, and numeric goals |
 | **Fees** | Monthly fee per teacher (paid / unpaid) next to how many classes actually happened |
+| **Insights** | Pace forecast against the exam date, weakest chapters, revision queue, study-time vs. work-remaining, teacher reliability |
 | **Settings** | Subjects, exam date, study goal, theme, sync, and backup |
 
 ### The 0–5 understanding scale
@@ -120,6 +121,39 @@ devices.
 7. On her other device, open the app → **Settings → Cloud sync** → paste the code
    under *"use an existing code"* → **Connect**.
 
+### What lands in the database
+
+Two layers, on purpose:
+
+- **`study_state`** — the sync layer. One JSON document per sync code.
+- **`sd_*` tables** — the analysis layer. Every push explodes that document
+  into ordinary relational tables (`sd_chapters`, `sd_session_logs`,
+  `sd_study_sessions`, `sd_level_events`, …) that you can run SQL over.
+
+The `sd_*` tables are a **derived projection**, rebuilt from the JSON on every
+sync. Never write to them by hand — the next push overwrites them. Because they
+are derived rather than maintained in parallel, they cannot drift from what the
+app actually holds.
+
+Ready-made views:
+
+| View | Answers |
+|---|---|
+| `v_subject_progress` | How complete is each subject, on the same 0–5 basis the app uses? |
+| `v_weekly_progress` | How many level-points were gained each week? |
+| `v_weekly_study` | How many minutes went into each subject each week? |
+| `v_teacher_reliability` | How often did each teacher's class actually happen, and how well did she follow it? |
+| `v_coverage_adherence` | Did each teacher cover what they said they would, month by month? |
+| `v_revision_due` | Which strong chapters have gone stale? |
+| `v_effort_vs_need` | Is study time going where the work still is? |
+
+```sql
+-- e.g. subjects where the remaining work outweighs the time being spent
+select subject, points_left, minutes_30d, need_share_pct, effort_share_pct
+from v_effort_vs_need
+order by need_share_pct - coalesce(effort_share_pct, 0) desc;
+```
+
 ### How the sync works
 
 The entire app state is stored as one JSON document keyed by a secret UUID (the
@@ -141,6 +175,19 @@ in. Knowing one sync code reveals nothing about any other.
 The practical consequence: **the sync code is the password.** Anyone who has it
 can read and change the data. It is not shown anywhere except Settings — keep it
 private, and don't put it in a screenshot.
+
+The `sd_*` analysis tables are locked down the same way: RLS on, no policies, so
+the anonymous API key cannot read them. You query them from the Supabase SQL
+Editor, which runs as a privileged role.
+
+### A note on whose data this is
+
+This is one student's personal study record, including how well she says she
+understands each chapter. The design keeps it that way: everything on the
+Insights page is computed **on her device**, and the only copy that leaves it is
+the one that goes to a Supabase project you control. There is no analytics SDK,
+no third-party script, and nothing is sent anywhere else. If that ever changes,
+it should be her call.
 
 ---
 

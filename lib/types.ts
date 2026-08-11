@@ -154,6 +154,25 @@ export interface ExamEvent {
 }
 
 /**
+ * One recorded change to a chapter's understanding level.
+ *
+ * A chapter only stores its *current* level, so without this there is no way
+ * to answer "is she actually moving?" - the single most useful question for
+ * predicting whether the syllabus gets finished in time.
+ */
+export interface LevelEvent {
+  id: ID;
+  chapterId: ID;
+  subjectId: ID;
+  /** Level after the change. */
+  level: number;
+  /** Level before it, so gains and slips are both visible. */
+  previous: number;
+  /** ISO timestamp. */
+  at: string;
+}
+
+/**
  * What a teacher intends to cover in a given month. Filled in from what they
  * tell her, then ticked off as it actually happens.
  */
@@ -240,6 +259,7 @@ export interface AppState {
   homework: Homework[];
   exams: ExamEvent[];
   coverage: CoveragePlan[];
+  levelHistory: LevelEvent[];
   studySessions: StudySession[];
   fees: FeePayment[];
   routines: RoutineItem[];
@@ -259,6 +279,7 @@ export type CollectionKey =
   | "homework"
   | "exams"
   | "coverage"
+  | "levelHistory"
   | "studySessions"
   | "fees"
   | "routines"

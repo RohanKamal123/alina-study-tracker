@@ -16,6 +16,7 @@ import {
   CalendarClock,
   MoreHorizontal,
   Target,
+  Sparkles,
   Settings as SettingsIcon,
   Timer,
   Users,
@@ -32,6 +33,7 @@ const NAV = [
   { href: "/schedule", label: "Schedule", icon: ClipboardList },
   { href: "/plan", label: "Class plan", icon: CalendarClock },
   { href: "/syllabus", label: "Syllabus", icon: BookOpen },
+  { href: "/insights", label: "Insights", icon: Sparkles },
   { href: "/homework", label: "Homework", icon: ListChecks },
   { href: "/exams", label: "Exams", icon: GraduationCap },
   { href: "/study", label: "Study timer", icon: Timer },
@@ -41,7 +43,7 @@ const NAV = [
 ];
 
 /** The five that fit a phone's bottom bar. */
-const MOBILE_NAV = [NAV[0], NAV[1], NAV[5], NAV[6], NAV[8]];
+const MOBILE_NAV = [NAV[0], NAV[1], NAV[5], NAV[6], NAV[9]];
 
 function SyncBadge() {
   const { syncStatus, cloudConfigured } = useStore();
