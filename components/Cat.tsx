@@ -104,50 +104,44 @@ export function SleepingCat({
   return (
     <svg
       width={size}
-      height={size * 0.72}
-      viewBox="0 0 200 144"
+      height={size * 0.75}
+      viewBox="0 0 200 150"
       fill="none"
       className={className}
       style={style}
       aria-hidden
     >
-      {/* tail curling around the body */}
+      {/* tail, curling out from behind the body */}
       <path
-        d="M150 116c22 4 34-6 32-20-2-13-16-16-22-8-5 7 1 13 7 11"
+        d="M152 120c24 5 36-6 34-21-2-14-17-17-24-9-5 7 1 14 8 12"
         stroke="currentColor"
-        strokeWidth="12"
+        strokeWidth="11"
         strokeLinecap="round"
         fill="none"
-        opacity=".55"
+        opacity=".6"
       />
       {/* body */}
+      <path d="M44 122c-16 0-28-12-28-29 0-28 26-49 60-49s62 19 62 47c0 18-12 31-29 31z" fill="currentColor" />
+      {/*
+        Ears are drawn before the head so the head overlaps their base. They
+        must also reach well above the head circle's top edge (y=58) — an
+        earlier version tucked them at y=50 against a circle topping out at
+        y=54, which left the silhouette reading as a featureless lump.
+      */}
+      <path d="M40 66 L34 30 L64 52 Z" fill="currentColor" />
+      <path d="M84 66 L90 30 L60 52 Z" fill="currentColor" />
+      {/* head */}
+      <circle cx="62" cy="90" r="32" fill="currentColor" />
+      {/* closed, sleeping eyes */}
       <path
-        d="M40 116c-14 0-24-11-24-26 0-26 24-46 56-46s58 18 58 44c0 17-11 28-27 28z"
-        fill="currentColor"
-      />
-      {/* head tucked in */}
-      <circle cx="52" cy="84" r="30" fill="currentColor" />
-      <path d="M28 68V50l16 10z" fill="currentColor" />
-      <path d="M76 68V50L60 60z" fill="currentColor" />
-      {/* closed eyes */}
-      <path
-        d="M38 82c2.5 3 6.5 3 9 0M57 82c2.5 3 6.5 3 9 0"
+        d="M46 88c3 3.6 8 3.6 11 0M67 88c3 3.6 8 3.6 11 0"
         stroke="var(--surface)"
-        strokeWidth="2.6"
+        strokeWidth="3"
         strokeLinecap="round"
         fill="none"
       />
       {/* nose */}
-      <path d="M52 90l-2.6-2.2h5.2z" fill="var(--surface)" opacity=".95" />
-      {/* stripes */}
-      <path
-        d="M104 62c6 5 8 12 7 20M120 70c5 6 6 13 4 21"
-        stroke="var(--surface)"
-        strokeWidth="4"
-        strokeLinecap="round"
-        opacity=".35"
-        fill="none"
-      />
+      <path d="M62 97l-3-2.6h6z" fill="var(--surface)" />
     </svg>
   );
 }
