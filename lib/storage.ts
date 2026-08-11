@@ -1,5 +1,5 @@
 import type { AppState } from "./types";
-import { getSupabase, cloudConfigured } from "./supabase";
+import { getSupabase, cloudConfigured, configError } from "./supabase";
 import { migrate } from "./defaults";
 
 export const LOCAL_KEY = "alina-study-tracker/v1";
@@ -88,7 +88,7 @@ export async function pushRemote(code: string, state: AppState): Promise<string>
   return (data as string) ?? state.updatedAt;
 }
 
-export { cloudConfigured };
+export { cloudConfigured, configError };
 
 export function newSyncCode(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();

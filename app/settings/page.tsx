@@ -11,7 +11,8 @@ import { todayKey } from "@/lib/date";
 import type { Subject } from "@/lib/types";
 
 export default function SettingsPage() {
-  const { state, update, upsert, replaceAll, syncNow, syncStatus, cloudConfigured } = useStore();
+  const { state, update, upsert, replaceAll, syncNow, syncStatus, cloudConfigured, configError } =
+    useStore();
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [subjectDraft, setSubjectDraft] = useState<Subject | null>(null);
@@ -202,10 +203,27 @@ export default function SettingsPage() {
       {/* ---- Sync ---- */}
       <Card>
         <h2 className="mb-1 font-bold">Cloud sync</h2>
+
+        {configError ? (
+          <div
+            className="mb-3 rounded-xl px-4 py-3 text-sm"
+            style={{ background: "var(--bad-soft)", color: "var(--text)" }}
+          >
+            <strong style={{ color: "var(--bad)" }}>Cloud sync is misconfigured.</strong>
+            <p className="mt-1">{configError}</p>
+            <p className="muted mt-2 text-xs">
+              Fix the value in your hosting provider&apos;s environment variables and redeploy.
+              Until then everything is still saved safely in this browser.
+            </p>
+          </div>
+        ) : null}
+
         <p className="muted mb-3 text-sm">
           {cloudConfigured
             ? "Turn this on to use the same data on your phone and laptop."
-            : "Not configured for this deployment. Everything is saved in this browser only — see the README for how to switch Supabase on."}
+            : configError
+              ? "Sync stays off until the settings above are corrected."
+              : "Not configured for this deployment. Everything is saved in this browser only — see the README for how to switch Supabase on."}
         </p>
 
         {cloudConfigured ? (

@@ -13,6 +13,7 @@ import type { AppState, CollectionKey } from "./types";
 import { emptyState, migrate, uid } from "./defaults";
 import {
   cloudConfigured,
+  configError,
   loadLocal,
   pullRemote,
   pushRemote,
@@ -36,6 +37,8 @@ interface StoreValue {
   replaceAll: (next: AppState) => void;
   syncNow: () => Promise<void>;
   cloudConfigured: boolean;
+  /** Set when env vars are present but unusable — surfaced in Settings. */
+  configError: string | null;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -196,6 +199,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       replaceAll,
       syncNow,
       cloudConfigured,
+      configError,
     }),
     [state, ready, syncStatus, update, upsert, remove, replaceAll, syncNow],
   );
