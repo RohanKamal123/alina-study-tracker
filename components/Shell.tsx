@@ -13,10 +13,11 @@ import {
   Home,
   ListChecks,
   Loader2,
+  CalendarClock,
   MoreHorizontal,
+  Target,
   Settings as SettingsIcon,
   Timer,
-  TrendingUp,
   Users,
   Wallet,
 } from "lucide-react";
@@ -29,17 +30,18 @@ const NAV = [
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/teachers", label: "Teachers", icon: Users },
   { href: "/schedule", label: "Schedule", icon: ClipboardList },
+  { href: "/plan", label: "Class plan", icon: CalendarClock },
   { href: "/syllabus", label: "Syllabus", icon: BookOpen },
   { href: "/homework", label: "Homework", icon: ListChecks },
-  { href: "/exams", label: "Results", icon: TrendingUp },
+  { href: "/exams", label: "Exams", icon: GraduationCap },
   { href: "/study", label: "Study timer", icon: Timer },
-  { href: "/routines", label: "Routine & goals", icon: GraduationCap },
+  { href: "/routines", label: "Routine & goals", icon: Target },
   { href: "/fees", label: "Fees", icon: Wallet },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 /** The five that fit a phone's bottom bar. */
-const MOBILE_NAV = [NAV[0], NAV[1], NAV[4], NAV[5], NAV[7]];
+const MOBILE_NAV = [NAV[0], NAV[1], NAV[5], NAV[6], NAV[8]];
 
 function SyncBadge() {
   const { syncStatus, cloudConfigured } = useStore();

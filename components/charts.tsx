@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useId } from "react";
+import React from "react";
+import { LEVELS, MAX_LEVEL } from "@/lib/levels";
 
 /**
  * Deliberately dependency-free SVG charts. The data volumes here are tiny
@@ -68,91 +69,6 @@ export function BarChart({
   );
 }
 
-export function LineChart({
-  data,
-  height = 180,
-  color = "var(--accent)",
-  suffix = "%",
-}: {
-  data: Point[];
-  height?: number;
-  color?: string;
-  suffix?: string;
-}) {
-  const gradientId = useId();
-
-  if (data.length === 0) {
-    return <p className="muted py-6 text-center text-sm">No results recorded yet.</p>;
-  }
-  if (data.length === 1) {
-    return (
-      <div className="py-6 text-center">
-        <div className="text-3xl font-bold" style={{ color }}>
-          {data[0].value}
-          {suffix}
-        </div>
-        <div className="muted mt-1 text-xs">
-          {data[0].label} — add another result to see the trend.
-        </div>
-      </div>
-    );
-  }
-
-  const w = 100;
-  const h = 100;
-  const pad = 6;
-  const max = Math.max(...data.map((d) => d.value), 100);
-  const min = Math.min(...data.map((d) => d.value), 0);
-  const span = max - min || 1;
-
-  const pts = data.map((d, i) => {
-    const x = pad + (i / (data.length - 1)) * (w - pad * 2);
-    const y = h - pad - ((d.value - min) / span) * (h - pad * 2);
-    return { x, y, d };
-  });
-
-  const line = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
-  const area = `${line} L${pts[pts.length - 1].x.toFixed(2)},${h - pad} L${pts[0].x.toFixed(2)},${h - pad} Z`;
-
-  return (
-    <div>
-      <svg
-        viewBox={`0 0 ${w} ${h}`}
-        preserveAspectRatio="none"
-        style={{ width: "100%", height }}
-        role="img"
-        aria-label="Score trend over time"
-      >
-        <defs>
-          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.35" />
-            <stop offset="100%" stopColor={color} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d={area} fill={`url(#${gradientId})`} />
-        <path
-          d={line}
-          fill="none"
-          stroke={color}
-          strokeWidth="1.6"
-          vectorEffect="non-scaling-stroke"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-        {pts.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r="1.8" fill={color} vectorEffect="non-scaling-stroke">
-            <title>{`${p.d.label}: ${p.d.value}${suffix}`}</title>
-          </circle>
-        ))}
-      </svg>
-      <div className="muted mt-1 flex justify-between text-[10px]">
-        <span>{data[0].label}</span>
-        <span>{data[data.length - 1].label}</span>
-      </div>
-    </div>
-  );
-}
-
 export function Donut({
   percent,
   size = 120,
@@ -193,6 +109,73 @@ export function Donut({
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
         {children ?? <span className="text-xl font-bold">{pct}%</span>}
       </div>
+    </div>
+  );
+}
+
+/**
+ * One bar per chapter, height = how well she knows it (0-5). This is the
+ * per-subject completion graph: it shows *where* the gaps are along the book,
+ * which a single percentage cannot.
+ */
+export function ChapterLevelChart({
+  chapters,
+  color,
+  height = 44,
+}: {
+  chapters: { id: string; number: number; name: string; level: number }[];
+  color: string;
+  height?: number;
+}) {
+  if (chapters.length === 0) {
+    return (
+      <p className="text-xs" style={{ color: "var(--muted)" }}>
+        No chapters yet.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex items-end gap-[3px]" style={{ height }} aria-hidden>
+      {chapters.map((c) => {
+        const lv = Math.max(0, Math.min(MAX_LEVEL, c.level ?? 0));
+        return (
+          <div
+            key={c.id}
+            className="flex-1 rounded-[3px] transition-all duration-500"
+            style={{
+              height: lv === 0 ? "10%" : `${(lv / MAX_LEVEL) * 100}%`,
+              background: lv === 0 ? "var(--surface-3)" : color,
+              opacity: lv === 0 ? 1 : 0.35 + (lv / MAX_LEVEL) * 0.65,
+              minWidth: 3,
+            }}
+            title={`Ch. ${c.number} — ${c.name}: ${lv}/${MAX_LEVEL}`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+/** A single stacked bar showing how many chapters sit at each level. */
+export function LevelSpread({ byLevel, total }: { byLevel: number[]; total: number }) {
+  if (total === 0) return null;
+  return (
+    <div className="flex h-1.5 w-full overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
+      {LEVELS.map((lv) => {
+        const count = byLevel[lv.value] ?? 0;
+        if (count === 0) return null;
+        return (
+          <div
+            key={lv.value}
+            style={{
+              width: `${(count / total) * 100}%`,
+              background: lv.value === 0 ? "var(--surface-3)" : lv.color,
+            }}
+            title={`${count} × ${lv.short}`}
+          />
+        );
+      })}
     </div>
   );
 }

@@ -45,7 +45,15 @@ export default function SettingsPage() {
     update((draft) => {
       draft.subjects = draft.subjects.filter((x) => x.id !== id);
       draft.chapters = draft.chapters.filter((c) => c.subjectId !== id);
-      draft.exams = draft.exams.filter((e) => e.subjectId !== id);
+      // Exam routines reference subjects per paper, not per exam.
+      draft.exams.forEach((e) => {
+        e.papers.forEach((pp) => {
+          if (pp.subjectId === id) pp.subjectId = null;
+        });
+      });
+      draft.coverage.forEach((c) => {
+        if (c.subjectId === id) c.subjectId = null;
+      });
       draft.teachers.forEach((t) => {
         t.subjectIds = t.subjectIds.filter((x) => x !== id);
       });
@@ -96,7 +104,7 @@ export default function SettingsPage() {
               onChange={(e) => setSetting("studentName", e.target.value)}
             />
           </Field>
-          <Field label="SSC exam start date">
+          <Field label="SSC exam start date" hint="Drives every countdown in the app.">
             <input
               className="input"
               type="date"

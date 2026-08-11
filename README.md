@@ -13,24 +13,52 @@ and switched on with two environment variables.
 
 | Page | What it's for |
 |---|---|
-| **Today** | Countdown to the exam, today's classes, daily routine, study plan, homework due, study-goal progress |
+| **Today** | Countdown to the exam, a 7-day topic strip (3 days back → 3 days ahead), per-subject progress, today's classes, daily routine, homework due |
 | **Calendar** | Month view; per day, plan what to study and afterwards record what was *actually* covered |
 | **Teachers** | Every tutor / coaching centre, online or offline, with the subjects they cover and their monthly fee |
 | **Schedule** | Recurring weekly class slots (Sat–Fri week) |
-| **Syllabus** | NCTB chapter list per subject, tracked Not started → Learning → Done → Revised, with a confidence rating |
+| **Class plan** | What each teacher says they will cover this month, plus the next two weeks of scheduled classes |
+| **Syllabus** | NCTB chapter list per subject, each chapter rated 0–5 on understanding, with a completion graph per subject |
 | **Homework** | Tasks grouped by overdue / today / tomorrow / later |
-| **Results** | Model tests and school exams, with a trend line and weakest-subject ranking |
+| **Exams** | Upcoming exams and their paper-by-paper routine, with a countdown to the next one |
 | **Study timer** | Stopwatch that logs self-study minutes per subject, plus a daily streak and 14-day chart |
 | **Routine & goals** | Repeating daily habits with a 7-day consistency bar, and numeric goals |
 | **Fees** | Monthly fee per teacher (paid / unpaid) next to how many classes actually happened |
 | **Settings** | Subjects, exam date, study goal, theme, sync, and backup |
 
-### Two design decisions worth knowing
+### The 0–5 understanding scale
+
+The syllabus is tracked on one axis, and the wording matters more than the number:
+
+| | |
+|---|---|
+| **0** | Never started this chapter |
+| **1** | Just know what is in the chapter |
+| **2** | Know some parts of it |
+| **3** | Knew it, but needs a revision |
+| **4** | Can solve 70–80% of CQ, MCQ and SQ |
+| **5** | Can solve everything |
+
+Every completion figure in the app is the mean level over a subject's chapters,
+expressed as a percentage — so a subject only reaches 100% when every chapter is
+at 5. Completion is shown **per subject**, never as one number across the whole
+syllabus, because the useful question is always "which subject is weak?".
+
+Each subject also gets a bar-per-chapter graph, which shows *where* along the
+book the gaps are — something a single percentage cannot.
+
+### Three design decisions worth knowing
 
 **Teachers are closed out, not deleted.** When she stops with a tutor, "Stopped
 studying" sets an end date and switches off their class slots. Old logs, fees
 and history stay intact, and the teacher can be resumed later. Delete is there
 too, but it cascades and is meant for typos.
+
+**Planned topics are handed out one per class, in order.** The Today page looks
+ahead using the monthly class plan: each upcoming class gets the next unfinished
+topic for that teacher, rather than every future day showing the same first
+topic. Days in the past show only what was actually logged — behind you is fact,
+ahead of you is intent.
 
 **Homework entered in a class log appears in the Homework list automatically.**
 Logging a class ("covered X, homework Y") mirrors the homework into the task

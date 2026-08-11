@@ -6,13 +6,18 @@ export type Mode = "OFFLINE" | "ONLINE";
 /** A private tutor vs. a coaching centre / batch. */
 export type TeacherKind = "TUTOR" | "COACHING";
 
-export type ChapterStatus = "NOT_STARTED" | "LEARNING" | "DONE" | "REVISED";
+/**
+ * How well she knows a chapter, 0-5. This is the single axis the syllabus is
+ * tracked on - it replaced a separate status enum plus a confidence score,
+ * which asked the same question twice.
+ */
+export type Level = 0 | 1 | 2 | 3 | 4 | 5;
 
 export type ClassStatus = "HELD" | "CANCELLED" | "MISSED" | "RESCHEDULED";
 
 export type PlanKind = "PLAN" | "REVISION" | "EXAM" | "OTHER";
 
-export type ExamKind = "MODEL" | "SCHOOL" | "COACHING" | "TUTOR" | "OTHER";
+export type ExamKind = "SSC" | "MODEL" | "SCHOOL" | "COACHING" | "OTHER";
 
 export type GoalKind = "WEEKLY" | "MONTHLY" | "EXAM";
 
@@ -106,9 +111,8 @@ export interface Chapter {
   number: number;
   name: string;
   nameBn?: string;
-  status: ChapterStatus;
-  /** 0 = shaky, 3 = exam ready. */
-  confidence: number;
+  /** 0-5, see LEVELS in lib/levels.ts for what each step means. */
+  level: number;
   updatedAt?: string;
 }
 
@@ -124,15 +128,45 @@ export interface Homework {
   doneAt?: string;
 }
 
-export interface ExamResult {
+/** One paper inside an exam routine. */
+export interface ExamPaper {
   id: ID;
+  subjectId: ID | null;
+  /** YYYY-MM-DD */
   date: string;
-  subjectId: ID;
+  /** "HH:MM" start time, optional. */
+  time?: string;
+  note?: string;
+}
+
+/**
+ * An upcoming exam and its routine. The SSC exam itself is tracked here too,
+ * so the countdown and the paper-by-paper routine live in one place.
+ */
+export interface ExamEvent {
+  id: ID;
   name: string;
   kind: ExamKind;
-  marks: number;
-  total: number;
+  /** First day of the exam. */
+  startDate: string;
   note?: string;
+  papers: ExamPaper[];
+}
+
+/**
+ * What a teacher intends to cover in a given month. Filled in from what they
+ * tell her, then ticked off as it actually happens.
+ */
+export interface CoveragePlan {
+  id: ID;
+  teacherId: ID;
+  subjectId: ID | null;
+  /** YYYY-MM */
+  month: string;
+  /** The topic, in her own words or theirs. */
+  title: string;
+  chapterIds?: ID[];
+  done: boolean;
 }
 
 /** One tracked stretch of self-study. */
@@ -204,7 +238,8 @@ export interface AppState {
   plans: PlanEntry[];
   chapters: Chapter[];
   homework: Homework[];
-  exams: ExamResult[];
+  exams: ExamEvent[];
+  coverage: CoveragePlan[];
   studySessions: StudySession[];
   fees: FeePayment[];
   routines: RoutineItem[];
@@ -223,6 +258,7 @@ export type CollectionKey =
   | "chapters"
   | "homework"
   | "exams"
+  | "coverage"
   | "studySessions"
   | "fees"
   | "routines"

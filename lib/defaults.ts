@@ -1,7 +1,7 @@
-import type { AppState, Chapter, Subject } from "./types";
+import type { AppState, Chapter, ExamEvent, Subject } from "./types";
 import { SSC_SUBJECTS, DEFAULT_SUBJECT_NAMES, type SeedSubject } from "./syllabus";
 
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
 
 export function uid(prefix = "id"): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36).slice(-4)}`;
@@ -21,8 +21,7 @@ export function subjectFromSeed(seed: SeedSubject): { subject: Subject; chapters
     number: i + 1,
     name: c.name,
     nameBn: c.nameBn,
-    status: "NOT_STARTED",
-    confidence: 0,
+    level: 0,
   }));
   return { subject, chapters };
 }
@@ -44,7 +43,7 @@ export function emptyState(): AppState {
     updatedAt: new Date().toISOString(),
     settings: {
       studentName: "Alina",
-      examDate: "2026-12-01",
+      examDate: "2027-01-07",
       dailyStudyMinutesTarget: 180,
       syncCode: null,
       theme: "system",
@@ -57,6 +56,7 @@ export function emptyState(): AppState {
     chapters,
     homework: [],
     exams: [],
+    coverage: [],
     studySessions: [],
     fees: [],
     routines: [
@@ -98,7 +98,9 @@ export function migrate(raw: unknown): AppState {
     plans: arr(input.plans, []),
     chapters: arr(input.chapters, input.subjects === undefined ? base.chapters : []),
     homework: arr(input.homework, []),
+    // v1 stored marks here; those rows are dropped by normaliseExams below.
     exams: arr(input.exams, []),
+    coverage: arr(input.coverage, []),
     studySessions: arr(input.studySessions, []),
     fees: arr(input.fees, []),
     routines: arr(input.routines, []),
@@ -108,6 +110,9 @@ export function migrate(raw: unknown): AppState {
         : {},
     goals: arr(input.goals, []),
   };
+
+  state.chapters = state.chapters.map(normaliseChapter);
+  state.exams = state.exams.filter(isExamEvent).map(normaliseExam);
 
   // Guard against a corrupted exam date breaking every countdown on the app.
   if (!/^\d{4}-\d{2}-\d{2}$/.test(state.settings.examDate)) {
@@ -119,4 +124,45 @@ export function migrate(raw: unknown): AppState {
   }
 
   return state;
+}
+
+/** v1 chapters carried `status` + `confidence`; v2 carries a single 0-5 level. */
+type LegacyChapter = Chapter & {
+  status?: "NOT_STARTED" | "LEARNING" | "DONE" | "REVISED";
+  confidence?: number;
+};
+
+const LEGACY_STATUS_TO_LEVEL: Record<string, number> = {
+  NOT_STARTED: 0,
+  LEARNING: 2,
+  DONE: 4,
+  REVISED: 5,
+};
+
+function normaliseChapter(raw: LegacyChapter): Chapter {
+  const { status, confidence, ...rest } = raw;
+  let level = rest.level;
+  if (typeof level !== "number" || Number.isNaN(level)) {
+    // Fall back to the old pair, preferring the coarser status.
+    level = status ? (LEGACY_STATUS_TO_LEVEL[status] ?? 0) : Math.min(5, (confidence ?? 0) * 2);
+  }
+  return { ...rest, level: Math.max(0, Math.min(5, Math.round(level))) };
+}
+
+/**
+ * v1's `exams` held marks (`marks`/`total`); v2's hold an exam routine. The
+ * two shapes are incompatible, so old score rows are dropped rather than
+ * mangled into meaningless events.
+ */
+function isExamEvent(raw: unknown): boolean {
+  if (!raw || typeof raw !== "object") return false;
+  const e = raw as Record<string, unknown>;
+  return typeof e.startDate === "string" && e.marks === undefined;
+}
+
+function normaliseExam(raw: ExamEvent): ExamEvent {
+  return {
+    ...raw,
+    papers: Array.isArray(raw.papers) ? raw.papers : [],
+  };
 }

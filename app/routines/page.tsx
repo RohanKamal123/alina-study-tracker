@@ -309,7 +309,7 @@ export default function RoutinesPage() {
                 onChange={(e) => setRoutineDraft({ ...routineDraft, time: e.target.value || undefined })}
               />
             </Field>
-            <Field label="Days" hint="Pick none for every day.">
+            <Field label="Days" hint="Pick none for every day." group>
               <div className="flex flex-wrap gap-1.5">
                 {WEEK_ORDER.map((wd) => {
                   const on = routineDraft.weekdays.includes(wd);

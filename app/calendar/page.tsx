@@ -473,7 +473,7 @@ function CalendarInner() {
       >
         {logDraft ? (
           <div className="space-y-3">
-            <Field label="Status">
+            <Field label="Status" group>
               <div className="flex flex-wrap gap-1.5">
                 {(Object.keys(STATUS_LABEL) as ClassStatus[]).map((s) => (
                   <button
@@ -533,7 +533,7 @@ function CalendarInner() {
                   />
                 </Field>
 
-                <Field label="How well did you follow it?">
+                <Field label="How well did you follow it?" group>
                   <div className="flex gap-1.5">
                     {[1, 2, 3, 4, 5].map((n) => (
                       <button
@@ -558,7 +558,7 @@ function CalendarInner() {
                   </div>
                 </Field>
 
-                <Field label="Chapters touched">
+                <Field label="Chapters touched" group>
                   <div className="max-h-40 overflow-y-auto rounded-lg border p-2" style={{ borderColor: "var(--border)" }}>
                     {state.chapters
                       .filter((c) => !logDraft.subjectId || c.subjectId === logDraft.subjectId)

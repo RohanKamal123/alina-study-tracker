@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { Card, Dot, Progress, Stat } from "@/components/ui";
-import { Donut } from "@/components/charts";
+import { ChapterLevelChart } from "@/components/charts";
+import TopicTimeline from "@/components/TopicTimeline";
 import { SleepingCat } from "@/components/Cat";
 import {
   classesOn,
@@ -27,13 +28,17 @@ import {
   studyMinutesOn,
   studyStreak,
   subjectColor,
-  syllabusProgress,
+  progressBySubject,
+  nextExam,
+  topicTimeline,
   uncoveredSubjects,
 } from "@/lib/selectors";
 import {
+  formatDay,
   formatDuration,
   formatLongDay,
   formatTime,
+  daysBetween,
   todayKey,
 } from "@/lib/date";
 
@@ -48,7 +53,9 @@ export default function DashboardPage() {
   const plans = useMemo(() => plansOn(state, today), [state, today]);
   const homework = useMemo(() => openHomework(state).slice(0, 5), [state]);
   const overdue = useMemo(() => overdueHomework(state), [state]);
-  const progress = useMemo(() => syllabusProgress(state), [state]);
+  const subjectProgress = useMemo(() => progressBySubject(state), [state]);
+  const timeline = useMemo(() => topicTimeline(state, 3, 3), [state]);
+  const exam = useMemo(() => nextExam(state), [state]);
   const gaps = useMemo(() => uncoveredSubjects(state), [state]);
 
   const left = daysToExam(state);
@@ -128,7 +135,7 @@ export default function DashboardPage() {
                   <span className="display text-xl font-bold sm:text-2xl">days left</span>
                 </div>
                 <div className="mt-2 text-sm font-semibold" style={{ opacity: 0.85 }}>
-                  About {Math.floor(left / 7)} weeks · syllabus {progress.percent}% done
+                  About {Math.floor(left / 7)} weeks to go
                 </div>
               </>
             ) : (
@@ -138,20 +145,22 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <div className="relative shrink-0">
-            <Donut
-              percent={progress.percent}
-              size={116}
-              stroke={12}
-              color="var(--ink-on-accent)"
-              track="color-mix(in srgb, var(--ink-on-accent) 22%, transparent)"
+          {exam ? (
+            <div
+              className="relative shrink-0 rounded-2xl px-4 py-3"
+              style={{ background: "color-mix(in srgb, var(--ink-on-accent) 16%, transparent)" }}
             >
-              <span className="numeral text-2xl">{progress.percent}%</span>
-              <span className="text-[10px] font-bold" style={{ opacity: 0.8 }}>
-                syllabus
-              </span>
-            </Donut>
-          </div>
+              <div className="eyebrow" style={{ color: "inherit", opacity: 0.8 }}>
+                Next exam
+              </div>
+              <div className="display mt-0.5 max-w-[13rem] truncate text-base font-bold">
+                {exam.name || "Upcoming exam"}
+              </div>
+              <div className="mt-1 text-sm font-semibold" style={{ opacity: 0.9 }}>
+                {Math.max(0, daysBetween(today, exam.startDate))} days · {formatDay(exam.startDate)}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -217,6 +226,52 @@ export default function DashboardPage() {
           height={10}
         />
       </div>
+
+      {/* What she studied, is studying, and is about to study */}
+      <Card>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="display text-lg font-bold">Study topics</h2>
+          <span className="text-xs font-semibold" style={{ color: "var(--muted)" }}>
+            3 days back · 3 days ahead
+          </span>
+        </div>
+        <TopicTimeline days={timeline} state={state} />
+      </Card>
+
+      {/* Per-subject syllabus progress */}
+      {subjectProgress.length > 0 ? (
+        <Card>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="display text-lg font-bold">Subject progress</h2>
+            <Link
+              href="/syllabus"
+              className="text-xs font-bold hover:underline"
+              style={{ color: "var(--accent)" }}
+            >
+              Rate chapters
+            </Link>
+          </div>
+          <ul className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+            {subjectProgress.map(({ subject, progress, chapters }) => (
+              <li key={subject.id}>
+                <div className="mb-1 flex items-baseline justify-between gap-2">
+                  <span className="flex min-w-0 items-center gap-1.5 text-xs font-bold">
+                    <Dot color={subject.color} />
+                    <span className="truncate">{subject.name}</span>
+                  </span>
+                  <span
+                    className="numeral shrink-0 text-sm"
+                    style={{ color: subject.color }}
+                  >
+                    {progress.percent}%
+                  </span>
+                </div>
+                <ChapterLevelChart chapters={chapters} color={subject.color} height={26} />
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
 
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Today's classes */}

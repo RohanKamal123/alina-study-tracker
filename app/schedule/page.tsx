@@ -201,7 +201,7 @@ export default function SchedulePage() {
               </select>
             </Field>
 
-            <Field label="Day">
+            <Field label="Day" group>
               <div className="flex flex-wrap gap-1.5">
                 {WEEK_ORDER.map((wd) => (
                   <button

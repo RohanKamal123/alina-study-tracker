@@ -1,268 +1,270 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, TrendingDown, TrendingUp } from "lucide-react";
+import { CalendarDays, Plus, Trash2 } from "lucide-react";
 import { useStore, uid } from "@/lib/store";
-import { Card, ConfirmButton, Dot, Empty, Field, Modal, PageHeader, Stat } from "@/components/ui";
-import { LineChart, type Point } from "@/components/charts";
-import { subjectAverage } from "@/lib/selectors";
-import { formatDay, todayKey } from "@/lib/date";
-import type { ExamKind, ExamResult } from "@/lib/types";
+import { Card, ConfirmButton, Dot, Empty, Field, Modal, PageHeader } from "@/components/ui";
+import { lastDayOf, nextExam, papersSorted } from "@/lib/selectors";
+import { daysBetween, formatDay, formatLongDay, formatTime, todayKey } from "@/lib/date";
+import type { ExamEvent, ExamKind, ExamPaper } from "@/lib/types";
 
 const KIND_LABEL: Record<ExamKind, string> = {
+  SSC: "SSC Board exam",
   MODEL: "Model test",
   SCHOOL: "School exam",
-  COACHING: "Coaching test",
-  TUTOR: "Tutor test",
+  COACHING: "Coaching exam",
   OTHER: "Other",
 };
 
-export default function ExamsPage() {
-  const { state, upsert, remove } = useStore();
-  const [draft, setDraft] = useState<ExamResult | null>(null);
-  const [focus, setFocus] = useState<string>("ALL");
-
-  const subjects = state.subjects.filter((s) => !s.archived);
-
-  const blank = (): ExamResult => ({
+function blankExam(startDate: string): ExamEvent {
+  return {
     id: uid("ex"),
-    date: todayKey(),
-    subjectId: focus !== "ALL" ? focus : (subjects[0]?.id ?? ""),
     name: "",
     kind: "MODEL",
-    marks: 0,
-    total: 100,
-  });
+    startDate,
+    papers: [],
+  };
+}
 
-  const rows = useMemo(
+export default function ExamsPage() {
+  const { state, upsert, remove } = useStore();
+  const [draft, setDraft] = useState<ExamEvent | null>(null);
+
+  const today = todayKey();
+  const next = useMemo(() => nextExam(state), [state]);
+
+  const upcoming = useMemo(
     () =>
       [...state.exams]
-        .filter((e) => focus === "ALL" || e.subjectId === focus)
-        .sort((a, b) => b.date.localeCompare(a.date)),
-    [state.exams, focus],
+        .filter((e) => lastDayOf(e) >= today)
+        .sort((a, b) => a.startDate.localeCompare(b.startDate)),
+    [state.exams, today],
   );
 
-  const chartData: Point[] = useMemo(
+  const past = useMemo(
     () =>
-      [...rows]
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .filter((e) => e.total > 0)
-        .map((e) => ({
-          label: formatDay(e.date),
-          value: Math.round((e.marks / e.total) * 100),
-        })),
-    [rows],
+      [...state.exams]
+        .filter((e) => lastDayOf(e) < today)
+        .sort((a, b) => b.startDate.localeCompare(a.startDate)),
+    [state.exams, today],
   );
 
-  const overallAvg = useMemo(() => {
-    const valid = state.exams.filter((e) => e.total > 0);
-    if (valid.length === 0) return null;
-    return Math.round(valid.reduce((s, e) => s + (e.marks / e.total) * 100, 0) / valid.length);
-  }, [state.exams]);
+  const addPaper = () => {
+    if (!draft) return;
+    setDraft({
+      ...draft,
+      papers: [
+        ...draft.papers,
+        { id: uid("pp"), subjectId: null, date: draft.startDate, time: "10:00" },
+      ],
+    });
+  };
 
-  /** Compares the newest three results against the three before them. */
-  const trend = useMemo(() => {
-    if (chartData.length < 4) return null;
-    const recent = chartData.slice(-3);
-    const older = chartData.slice(-6, -3);
-    if (older.length === 0) return null;
-    const avg = (xs: Point[]) => xs.reduce((s, p) => s + p.value, 0) / xs.length;
-    return Math.round(avg(recent) - avg(older));
-  }, [chartData]);
+  const setPaper = (id: string, patch: Partial<ExamPaper>) => {
+    if (!draft) return;
+    setDraft({
+      ...draft,
+      papers: draft.papers.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+    });
+  };
 
-  const weakest = useMemo(() => {
-    const scored = subjects
-      .map((s) => ({ s, avg: subjectAverage(state, s.id) }))
-      .filter((x): x is { s: (typeof subjects)[number]; avg: number } => x.avg !== null)
-      .sort((a, b) => a.avg - b.avg);
-    return scored.slice(0, 3);
-  }, [state, subjects]);
+  const renderRoutine = (exam: ExamEvent, dense = false) => {
+    const papers = papersSorted(exam);
+    if (papers.length === 0) {
+      return (
+        <p className="text-sm" style={{ color: "var(--muted)" }}>
+          No routine entered yet — the start date alone is enough to begin with.
+        </p>
+      );
+    }
+    return (
+      <ol className="space-y-1.5">
+        {papers.map((p) => {
+          const subject = state.subjects.find((s) => s.id === p.subjectId);
+          const away = daysBetween(today, p.date);
+          const done = away < 0;
+          return (
+            <li
+              key={p.id}
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2"
+              style={{ background: "var(--surface-2)", opacity: done ? 0.55 : 1 }}
+            >
+              <span className="numeral w-20 shrink-0 text-xs">{formatDay(p.date)}</span>
+              <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+                {subject ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Dot color={subject.color} />
+                    {subject.name}
+                  </span>
+                ) : (
+                  "Paper"
+                )}
+              </span>
+              {p.time ? (
+                <span className="shrink-0 text-xs font-semibold" style={{ color: "var(--muted)" }}>
+                  {formatTime(p.time)}
+                </span>
+              ) : null}
+              {!dense && !done ? (
+                <span className="chip shrink-0">
+                  {away === 0 ? "today" : `${away}d`}
+                </span>
+              ) : null}
+            </li>
+          );
+        })}
+      </ol>
+    );
+  };
 
   return (
     <div>
       <PageHeader
-        title="Test results"
-        subtitle="Log every model test, school exam and coaching test. The trend matters far more than any single number."
+        title="Exams"
+        subtitle="Upcoming exams and their routines — the SSC board exam, model tests, school and coaching exams."
         action={
-          <button
-            className="btn btn-primary"
-            disabled={subjects.length === 0}
-            onClick={() => setDraft(blank())}
-          >
-            <Plus size={16} /> Add result
+          <button className="btn btn-primary" onClick={() => setDraft(blankExam(today))}>
+            <Plus size={16} /> Add exam
           </button>
         }
       />
 
+      {/* ---------- Next exam ---------- */}
+      {next ? (
+        <div
+          className="card card-raised mb-6 !border-transparent p-6"
+          style={{
+            background: "linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%)",
+            color: "var(--ink-on-accent)",
+          }}
+        >
+          <div className="eyebrow" style={{ color: "inherit", opacity: 0.8 }}>
+            Next exam
+          </div>
+          <h2 className="display mt-1 text-2xl font-bold">
+            {next.name || KIND_LABEL[next.kind]}
+          </h2>
+          <div className="mt-3 flex flex-wrap items-baseline gap-2">
+            <span className="numeral text-5xl">
+              {Math.max(0, daysBetween(today, next.startDate))}
+            </span>
+            <span className="display text-lg font-bold">
+              {daysBetween(today, next.startDate) === 0 ? "starts today" : "days away"}
+            </span>
+          </div>
+          <p className="mt-1.5 text-sm font-semibold" style={{ opacity: 0.9 }}>
+            Starts {formatLongDay(next.startDate)}
+            {next.papers.length > 0 ? ` · ${next.papers.length} papers` : ""}
+          </p>
+          {next.note ? (
+            <p className="mt-2 text-sm" style={{ opacity: 0.85 }}>
+              {next.note}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       {state.exams.length === 0 ? (
         <Empty
-          title="No results logged yet"
-          hint="After each test, record the marks. Once there are a few, you'll see whether you're improving."
+          title="No exams added yet"
+          hint="Add the SSC board exam with its routine, plus any model tests or school exams as they get announced."
           action={
-            <button
-              className="btn btn-primary"
-              disabled={subjects.length === 0}
-              onClick={() => setDraft(blank())}
-            >
-              <Plus size={16} /> Add the first result
+            <button className="btn btn-primary" onClick={() => setDraft(blankExam(today))}>
+              <Plus size={16} /> Add the first exam
             </button>
           }
         />
       ) : (
-        <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Stat label="Average" value={`${overallAvg ?? 0}%`} sub={`${state.exams.length} tests`} />
-            <Stat
-              label="Trend"
-              value={
-                trend === null ? "—" : `${trend > 0 ? "+" : ""}${trend}%`
-              }
-              sub={trend === null ? "Need 4+ results" : "Last 3 vs previous 3"}
-              tone={trend === null ? "default" : trend >= 0 ? "good" : "bad"}
-              icon={
-                trend !== null && trend < 0 ? <TrendingDown size={13} /> : <TrendingUp size={13} />
-              }
-            />
-            <Stat
-              label="Best"
-              value={
-                state.exams.length
-                  ? `${Math.max(...state.exams.filter((e) => e.total > 0).map((e) => Math.round((e.marks / e.total) * 100)))}%`
-                  : "—"
-              }
-              tone="good"
-            />
-            <Stat
-              label="Weakest"
-              value={weakest[0] ? `${weakest[0].avg}%` : "—"}
-              sub={weakest[0]?.s.name}
-              tone="warn"
-            />
-          </div>
-
-          <Card>
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-bold">
-                {focus === "ALL"
-                  ? "All subjects over time"
-                  : `${subjects.find((s) => s.id === focus)?.name} over time`}
-              </h2>
-              <select
-                className="input !w-auto !py-1 text-xs"
-                value={focus}
-                onChange={(e) => setFocus(e.target.value)}
-              >
-                <option value="ALL">All subjects</option>
-                {subjects.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
+        <div className="space-y-6">
+          {upcoming.length > 0 ? (
+            <div>
+              <h2 className="display mb-3 text-lg font-bold">Upcoming</h2>
+              <div className="space-y-3">
+                {upcoming.map((exam) => (
+                  <Card key={exam.id}>
+                    <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="display truncate text-base font-bold">
+                          {exam.name || KIND_LABEL[exam.kind]}
+                        </h3>
+                        <div
+                          className="mt-1 flex flex-wrap items-center gap-1.5 text-xs font-semibold"
+                          style={{ color: "var(--muted)" }}
+                        >
+                          <span className="chip">{KIND_LABEL[exam.kind]}</span>
+                          <span className="inline-flex items-center gap-1">
+                            <CalendarDays size={12} />
+                            from {formatDay(exam.startDate)}
+                          </span>
+                          <span>{Math.max(0, daysBetween(today, exam.startDate))} days away</span>
+                        </div>
+                      </div>
+                      <button
+                        className="btn btn-ghost !px-2.5 !py-1 text-xs"
+                        onClick={() => setDraft({ ...exam, papers: [...exam.papers] })}
+                      >
+                        Edit
+                      </button>
+                    </div>
+                    {renderRoutine(exam)}
+                    {exam.note ? (
+                      <p className="mt-2 text-xs italic" style={{ color: "var(--muted)" }}>
+                        {exam.note}
+                      </p>
+                    ) : null}
+                  </Card>
                 ))}
-              </select>
+              </div>
             </div>
-            <LineChart
-              data={chartData}
-              color={focus === "ALL" ? "var(--accent)" : subjects.find((s) => s.id === focus)?.color}
-            />
-          </Card>
-
-          {weakest.length > 0 ? (
-            <Card>
-              <h2 className="mb-3 text-sm font-bold">Subjects to push on</h2>
-              <ul className="space-y-2">
-                {weakest.map(({ s, avg }) => (
-                  <li key={s.id} className="flex items-center gap-3 text-sm">
-                    <Dot color={s.color} />
-                    <span className="flex-1 truncate">{s.name}</span>
-                    <span
-                      className="font-bold tabular-nums"
-                      style={{ color: avg < 50 ? "var(--bad)" : avg < 70 ? "var(--warn)" : "var(--good)" }}
-                    >
-                      {avg}%
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
           ) : null}
 
-          <div>
-            <h2 className="muted mb-2 text-xs font-bold uppercase tracking-wide">
-              All results ({rows.length})
-            </h2>
-            <div className="space-y-1.5">
-              {rows.map((e) => {
-                const pct = e.total > 0 ? Math.round((e.marks / e.total) * 100) : 0;
-                const subject = state.subjects.find((s) => s.id === e.subjectId);
-                return (
-                  <Card key={e.id} className="!px-3 !py-2.5">
-                    <button className="flex w-full items-center gap-3 text-left" onClick={() => setDraft({ ...e })}>
-                      <Dot color={subject?.color ?? "#94a3b8"} />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-semibold">
-                          {e.name || KIND_LABEL[e.kind]}
-                        </div>
-                        <div className="muted text-xs">
-                          {subject?.name ?? "Unknown"} · {KIND_LABEL[e.kind]} · {formatDay(e.date)}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div
-                          className="text-sm font-bold tabular-nums"
-                          style={{ color: pct < 50 ? "var(--bad)" : pct < 70 ? "var(--warn)" : "var(--good)" }}
-                        >
-                          {pct}%
-                        </div>
-                        <div className="muted text-[11px] tabular-nums">
-                          {e.marks}/{e.total}
-                        </div>
-                      </div>
+          {past.length > 0 ? (
+            <div>
+              <h2 className="display mb-3 text-lg font-bold" style={{ color: "var(--muted)" }}>
+                Finished
+              </h2>
+              <div className="space-y-2">
+                {past.map((exam) => (
+                  <Card key={exam.id} className="!py-3" style={{ opacity: 0.7 }}>
+                    <button
+                      className="flex w-full items-center gap-3 text-left"
+                      onClick={() => setDraft({ ...exam, papers: [...exam.papers] })}
+                    >
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+                        {exam.name || KIND_LABEL[exam.kind]}
+                      </span>
+                      <span className="shrink-0 text-xs" style={{ color: "var(--muted)" }}>
+                        {formatDay(exam.startDate)}
+                      </span>
                     </button>
                   </Card>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       )}
 
+      {/* ---------- Editor ---------- */}
       <Modal
         open={draft !== null}
         onClose={() => setDraft(null)}
-        title={state.exams.some((e) => e.id === draft?.id) ? "Edit result" : "Add result"}
+        title={state.exams.some((e) => e.id === draft?.id) ? "Edit exam" : "Add exam"}
+        wide
       >
         {draft ? (
           <div className="space-y-3">
-            <Field label="Test name">
+            <Field label="Exam name">
               <input
                 className="input"
                 autoFocus
                 value={draft.name}
-                placeholder="e.g. Model Test 3, Half-yearly"
+                placeholder="e.g. SSC Examination 2027, or Model Test 3"
                 onChange={(e) => setDraft({ ...draft, name: e.target.value })}
               />
             </Field>
+
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Subject">
-                <select
-                  className="input"
-                  value={draft.subjectId}
-                  onChange={(e) => {
-                    const s = state.subjects.find((x) => x.id === e.target.value);
-                    setDraft({
-                      ...draft,
-                      subjectId: e.target.value,
-                      total: s?.fullMarks ?? draft.total,
-                    });
-                  }}
-                >
-                  {subjects.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
               <Field label="Type">
                 <select
                   className="input"
@@ -276,48 +278,90 @@ export default function ExamsPage() {
                   ))}
                 </select>
               </Field>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <Field label="Marks">
-                <input
-                  className="input"
-                  type="number"
-                  min={0}
-                  value={draft.marks}
-                  onChange={(e) => setDraft({ ...draft, marks: Number(e.target.value) || 0 })}
-                />
-              </Field>
-              <Field label="Out of">
-                <input
-                  className="input"
-                  type="number"
-                  min={1}
-                  value={draft.total}
-                  onChange={(e) => setDraft({ ...draft, total: Number(e.target.value) || 1 })}
-                />
-              </Field>
-              <Field label="Date">
+              <Field label="Starts on">
                 <input
                   className="input"
                   type="date"
-                  value={draft.date}
-                  onChange={(e) => setDraft({ ...draft, date: e.target.value })}
+                  value={draft.startDate}
+                  onChange={(e) => setDraft({ ...draft, startDate: e.target.value })}
                 />
               </Field>
             </div>
-            {draft.total > 0 ? (
-              <p className="muted text-xs">
-                That is <strong>{Math.round((draft.marks / draft.total) * 100)}%</strong>.
-              </p>
-            ) : null}
-            <Field label="Note" hint="What went wrong, what to fix next time.">
+
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="label !mb-0">Routine</span>
+                <button className="btn btn-ghost !px-2.5 !py-1 text-xs" onClick={addPaper}>
+                  <Plus size={13} /> Add paper
+                </button>
+              </div>
+
+              {draft.papers.length === 0 ? (
+                <p className="dashed px-4 py-5 text-center text-sm" style={{ color: "var(--muted)" }}>
+                  Optional. Add each paper once the routine is published — the start
+                  date alone is enough until then.
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {draft.papers.map((p) => (
+                    <li
+                      key={p.id}
+                      className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-xl p-2.5"
+                      style={{ background: "var(--surface-2)" }}
+                    >
+                      <div className="grid gap-2 sm:grid-cols-3">
+                        <select
+                          className="input !py-1.5 text-xs"
+                          value={p.subjectId ?? ""}
+                          onChange={(e) => setPaper(p.id, { subjectId: e.target.value || null })}
+                        >
+                          <option value="">Subject…</option>
+                          {state.subjects
+                            .filter((s) => !s.archived)
+                            .map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
+                        </select>
+                        <input
+                          className="input !py-1.5 text-xs"
+                          type="date"
+                          value={p.date}
+                          onChange={(e) => setPaper(p.id, { date: e.target.value })}
+                        />
+                        <input
+                          className="input !py-1.5 text-xs"
+                          type="time"
+                          value={p.time ?? ""}
+                          onChange={(e) => setPaper(p.id, { time: e.target.value || undefined })}
+                        />
+                      </div>
+                      <button
+                        className="btn btn-danger !px-2 !py-1"
+                        aria-label="Remove paper"
+                        onClick={() =>
+                          setDraft({ ...draft, papers: draft.papers.filter((x) => x.id !== p.id) })
+                        }
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <Field label="Note">
               <textarea
                 className="input"
                 rows={2}
                 value={draft.note ?? ""}
+                placeholder="Centre, admit card, anything to remember"
                 onChange={(e) => setDraft({ ...draft, note: e.target.value })}
               />
             </Field>
+
             <div className="flex justify-between gap-2 pt-1">
               {state.exams.some((e) => e.id === draft.id) ? (
                 <ConfirmButton
@@ -338,9 +382,9 @@ export default function ExamsPage() {
                 </button>
                 <button
                   className="btn btn-primary"
-                  disabled={!draft.subjectId || draft.total <= 0}
+                  disabled={!draft.startDate}
                   onClick={() => {
-                    upsert("exams", draft);
+                    upsert("exams", { ...draft, name: draft.name.trim() });
                     setDraft(null);
                   }}
                 >

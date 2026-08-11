@@ -131,13 +131,21 @@ export function Field({
   label,
   children,
   hint,
+  group = false,
 }: {
   label: string;
   children: React.ReactNode;
   hint?: string;
+  /**
+   * Set for anything that is not a single form control — a row of chip
+   * buttons, a checkbox list. A <button> inside a <label> takes the label's
+   * text as its accessible name, so without this every day chip would
+   * announce as "Day" instead of "Sat", "Sun"…
+   */
+  group?: boolean;
 }) {
-  return (
-    <label className="block">
+  const body = (
+    <>
       <span className="label">{label}</span>
       {children}
       {hint ? (
@@ -145,8 +153,18 @@ export function Field({
           {hint}
         </span>
       ) : null}
-    </label>
+    </>
   );
+
+  if (group) {
+    return (
+      <div className="block" role="group" aria-label={label}>
+        {body}
+      </div>
+    );
+  }
+
+  return <label className="block">{body}</label>;
 }
 
 export function Progress({
